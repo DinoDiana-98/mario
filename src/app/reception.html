@@ -1,0 +1,58 @@
+<section class="reception-page" aria-label="Recepción de pedidos">
+  <aside class="reception-sidebar" aria-label="Menú lateral de recepción">
+    <div class="reception-side-brand"><div class="brand-mark" aria-hidden="true">M</div><div><strong>{{store.state().businessName}}</strong><small>Recepción · Sede El Golf</small></div></div>
+    <nav class="reception-side-links" aria-label="Secciones de recepción">
+      <button type="button" [class.current]="view() === 'orders'" [attr.aria-current]="view() === 'orders' ? 'page' : null" (click)="showOrders()"><span aria-hidden="true">▦</span> Pedidos <span class="side-count">{{count('new')}}</span></button>
+      <button type="button" [class.current]="view() === 'history'" [attr.aria-current]="view() === 'history' ? 'page' : null" (click)="showHistory()"><span aria-hidden="true">◷</span> Historial</button>
+      <button type="button" (click)="openStock()"><span aria-hidden="true">▤</span> Disponibilidad</button>
+    </nav>
+    <div class="reception-side-status"><span class="status-dot" [class.is-closed]="!store.state().storeOpen"></span><span>{{store.state().storeOpen ? 'Local abierto' : 'Local cerrado'}}<small>Control de recepción</small></span></div>
+  </aside>
+  @if (menuOpen()) {
+    <div class="reception-drawer-layer">
+      <button type="button" class="reception-menu-backdrop" aria-label="Cerrar menú de recepción" (click)="menuOpen.set(false)"></button>
+      <aside id="reception-mobile-menu" class="reception-mobile-drawer" aria-label="Menú de recepción">
+        <div class="reception-side-brand"><div class="brand-mark" aria-hidden="true">M</div><div><strong>{{store.state().businessName}}</strong><small>Recepción · Sede El Golf</small></div><button type="button" class="icon-btn" aria-label="Cerrar menú" (click)="menuOpen.set(false)">×</button></div>
+        <nav class="reception-side-links" aria-label="Secciones de recepción">
+          <button type="button" [class.current]="view() === 'orders'" [attr.aria-current]="view() === 'orders' ? 'page' : null" (click)="showOrders()"><span aria-hidden="true">▦</span> Pedidos <span class="side-count">{{count('new')}}</span></button>
+          <button type="button" [class.current]="view() === 'history'" [attr.aria-current]="view() === 'history' ? 'page' : null" (click)="showHistory()"><span aria-hidden="true">◷</span> Historial</button>
+          <button type="button" (click)="openStock()"><span aria-hidden="true">▤</span> Disponibilidad</button>
+        </nav>
+        <div class="reception-side-status"><span class="status-dot" [class.is-closed]="!store.state().storeOpen"></span><span>{{store.state().storeOpen ? 'Local abierto' : 'Local cerrado'}}<small>Control de recepción</small></span></div>
+      </aside>
+    </div>
+  }
+  <div class="reception-content">
+  <header class="reception-header">
+    <div class="reception-identity"><button type="button" class="reception-menu-trigger" aria-label="Abrir menú de recepción" aria-controls="reception-mobile-menu" [attr.aria-expanded]="menuOpen()" (click)="menuOpen.set(true)"><span aria-hidden="true">☰</span></button><div class="brand-mark" aria-hidden="true">M</div><div><h1>{{store.state().businessName}} <span class="location">· Sede El Golf</span></h1><button class="status-pill" [class.closed]="!store.state().storeOpen" (click)="toggleStore()" [attr.aria-label]="store.state().storeOpen ? 'Local abierto. Cambiar a cerrado' : 'Local cerrado. Cambiar a abierto'"><span class="status-dot"></span>{{store.state().storeOpen ? 'Abierto recibiendo pedidos' : 'Local cerrado'}}</button></div></div>
+    <div class="header-actions"><button class="btn secondary" (click)="stockOpen.set(true)">Disponibilidad</button><button class="btn orange" [disabled]="!store.state().storeOpen" (click)="simulate()">+ Simular pedido</button></div>
+  </header>
+  @if (view() === 'orders') { <div class="reception-tabs-wrap"><nav class="reception-tabs" aria-label="Estado del pedido">@for (item of tabs; track item.id) { <button type="button" [class.active]="tab() === item.id" [attr.aria-current]="tab() === item.id ? 'page' : null" (click)="setTab(item.id)">{{item.label}} <span class="count">{{count(item.id)}}</span></button> }</nav></div> }
+  <main class="reception-main">
+    @if (view() === 'history') {
+      <div class="reception-history"><div class="page-heading"><div><p class="eyebrow">RECEPCIÓN</p><h1>Historial de pedidos</h1><p>Pedidos entregados o rechazados en este navegador.</p></div><button type="button" class="btn secondary" (click)="showOrders()">Volver a pedidos</button></div>
+        @if (history().length) { <div class="panel responsive-list">@for (order of history(); track order.id) { <div class="data-row"><div><strong>Pedido #{{order.id}} · {{order.customer}}</strong><small>{{itemCount(order)}} productos · {{order.payment}}</small></div><span class="badge" [class.green]="order.status === 'delivered'">{{order.status === 'delivered' ? 'Entregado' : 'Rechazado'}}</span><strong>{{store.money(order.total)}}</strong></div> }</div> }
+        @else { <div class="empty-state"><div class="empty-symbol">◷</div><h2>Aún no hay movimientos</h2><p>Los pedidos entregados o rechazados aparecerán aquí.</p></div> }
+      </div>
+    } @else {
+    @if (filtered().length === 0) { <div class="empty-state"><div class="empty-symbol">✓</div><h2>No hay pedidos {{tab() === 'new' ? 'nuevos' : tab() === 'cooking' ? 'en preparación' : 'listos'}}</h2><p>{{emptyCopy[tab()]}}</p></div> }
+    @else {
+      <div class="order-workspace" [class.detail-visible]="mobileDetail()">
+        <div class="order-list" aria-label="Lista de pedidos"><div class="list-intro"><h2>{{filtered().length}} {{filtered().length === 1 ? 'pedido' : 'pedidos'}} {{tab() === 'new' ? 'nuevos' : tab() === 'cooking' ? 'en cocina' : 'listos'}}</h2><p>Selecciona uno para revisar la comanda.</p></div>
+          @for (order of filtered(); track order.id) { <button type="button" class="order-card" [class.selected]="selected()?.id === order.id" [attr.aria-pressed]="selected()?.id === order.id" (click)="select(order)"><span class="order-card-top"><strong class="order-number">#{{order.id}}</strong><strong class="order-customer">{{order.customer}}</strong><strong class="order-total">{{store.money(order.total)}}</strong></span><span class="muted small">{{itemCount(order)}} {{itemCount(order) === 1 ? 'producto' : 'productos'}} · Pagado con {{order.payment}}</span><span class="order-card-bottom"><span class="chip" [class.urgent]="order.status === 'new'" [class.green]="order.status === 'ready'">{{order.status === 'new' ? 'Aceptar en ' + remaining(order) : order.status === 'cooking' ? 'En preparación · ' + order.prepMinutes + ' min' : 'Esperando recojo'}}</span><span class="muted small">Repartidor: {{order.courier}}</span></span><span class="card-open">Ver comanda y acciones <span aria-hidden="true">→</span></span></button> }
+        </div>
+        @if (selected(); as order) { <article class="order-detail" aria-label="Detalle del pedido"><button class="mobile-back" (click)="back()">← Volver a pedidos</button><div class="detail-card"><div class="detail-head"><div><span class="eyebrow">COMANDA</span><h2>Pedido #{{order.id}}</h2><p>Cliente: <strong>{{order.customer}}</strong></p></div><div class="detail-total"><span>Total del pedido</span><strong>{{store.money(order.total)}}</strong></div></div><div class="payment-strip">Pagado online · {{order.payment}} <span>Repartidor {{order.courier}}</span></div>
+          <div class="items">@for (item of order.items; track item.name) { <div class="item"><span class="qty">{{item.quantity}}×</span><div><h3>{{item.name}}</h3>@if (item.detail) { <p>{{item.detail}}</p> }</div><strong>{{store.money(item.price * item.quantity)}}</strong></div> }</div>
+          @if (order.note) { <div class="note"><strong>Nota del cliente</strong><p>{{order.note}}</p></div> }
+          @if (order.status === 'new') { <div class="action-panel"><div class="deadline"><span>Tiempo para aceptar</span><strong>{{remaining(order)}}</strong></div><label class="field-label" for="prep-{{order.id}}">Tiempo de preparación</label><div class="prep-grid">@for (minutes of prepOptions; track minutes) { <button type="button" [class.chosen]="prep() === minutes" (click)="prep.set(minutes)">{{minutes}} min</button> }</div><div class="custom-prep"><label for="prep-{{order.id}}">Otro tiempo (5 a 120 min)</label><input id="prep-{{order.id}}" type="number" min="5" max="120" inputmode="numeric" [value]="prep() || ''" (input)="prep.set(+$any($event.target).value)" /></div><div class="detail-actions"><button class="btn secondary" (click)="rejectOpen.set(true)">Rechazar</button><button class="btn primary" [disabled]="prep() < 5 || prep() > 120" (click)="accept(order)">Aceptar pedido</button></div></div> }
+          @if (order.status === 'cooking') { <div class="action-panel"><p class="muted">En preparación desde hace {{age(order)}} min · Tiempo estimado: {{order.prepMinutes}} min</p><button class="btn primary wide" (click)="ready(order)">Marcar como listo para recoger</button></div> }
+          @if (order.status === 'ready') { <div class="action-panel"><p class="muted">{{order.deliveryStage === 'on-route' ? 'El repartidor está en ruta.' : 'Esperando al repartidor ' + order.courier + '.'}}</p><button class="btn primary wide" (click)="advance(order)">{{order.deliveryStage === 'on-route' ? 'Simular entrega confirmada' : 'Simular recojo del repartidor'}}</button><p class="hint">En producción, la entrega la confirma el repartidor con el código del cliente.</p></div> }
+        </div></article> }
+      </div>
+    }
+    }
+  </main>
+  </div>
+  @if (stockOpen()) { <div class="overlay" (click)="stockOpen.set(false)"><div class="sheet" role="dialog" aria-modal="true" aria-label="Disponibilidad de productos" (click)="$event.stopPropagation()"><div class="sheet-head"><div><h2>Disponibilidad</h2><p>Los cambios se reflejan en la carta de este prototipo.</p></div><button class="icon-btn" aria-label="Cerrar" (click)="stockOpen.set(false)">×</button></div>@for (product of store.products(); track product.id) { <div class="stock-row"><span><strong>{{product.name}}</strong><small>{{product.category}}</small></span><button class="btn small-btn" [class.secondary]="product.available" [class.primary]="!product.available" (click)="toggleStock(product.id)">{{product.available ? 'Disponible' : 'Agotado'}}</button></div> }</div></div> }
+  @if (rejectOpen()) { <div class="overlay" (click)="rejectOpen.set(false)"><div class="confirm-card" role="dialog" aria-modal="true" aria-label="Rechazar pedido" (click)="$event.stopPropagation()"><h2>Rechazar pedido #{{selected()?.id}}</h2><p>Elige un motivo para registrar esta acción en el prototipo.</p><label class="field-label" for="reject-reason">Motivo</label><select id="reject-reason" [value]="rejectReason()" (change)="rejectReason.set($any($event.target).value)"><option value="">Selecciona un motivo</option><option>Sin stock</option><option>Cocina saturada</option><option>Local por cerrar</option><option>Otro motivo</option></select><div class="detail-actions"><button class="btn secondary" (click)="rejectOpen.set(false)">Cancelar</button><button class="btn danger" [disabled]="!rejectReason()" (click)="reject(selected()!)">Confirmar rechazo</button></div></div></div> }
+</section>
